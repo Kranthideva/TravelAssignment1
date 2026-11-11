@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import travelexplorerKranthiMichelleMary.com.ui.theme.TravelExplorerTheme
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +21,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TravelExplorerTheme {
+                val destinations = remember {mutableStateOf(sampleDestinations)
+                }
+                fun toggleFavorite(destinationId: Int){
+                    destinations.value = destinations.value.map {
+                        destination ->
+                        if (destination.id == destinationId){
+                            destination.copy(isFavorite = ! destination.isFavorite)
+                        }
+                        else {
+                            destination
+                        }
+                    }
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         name = "Android",

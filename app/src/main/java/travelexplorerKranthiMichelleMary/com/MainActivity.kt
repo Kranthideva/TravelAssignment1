@@ -1,7 +1,6 @@
 package travelexplorerKranthiMichelleMary.com
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,23 +15,33 @@ import travelexplorerKranthiMichelleMary.com.Screens.HomeScreen
 import travelexplorerKranthiMichelleMary.com.Screens.SelectedDestinations
 import travelexplorerKranthiMichelleMary.com.ui.theme.TravelExplorerTheme
 
+val sampleDestinations = listOf(
+    Destination(1, "Toronto", "Canada", "CN Tower"),
+    Destination(2, "Kingston", "Jamaica", "Explorer Bob Marley Museum"),
+    Destination(3, "Paris", "France", "See the Eiffel Tower"),
+    Destination(4, "Tokyo", "Japan", "Visit Shibuya"),
+    Destination(5, "Cape Town", "South Africa", "See Table Mountain")
+)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val destinations = listOf(
-            Destination(1, "Toronto", "Canada", "CN Tower"),
-            Destination(2, "Kingston", "Jamaica", "Explorer Bob Marley Museum"),
-            Destination(3, "Paris", "France", "See the Eiffel Tower"),
-            Destination(4, "Tokyo", "Japan", "Visit Shibuya"),
-            Destination(5, "Cape Town", "South Africa", "See Table Mountain")
-        )
-
         setContent {
             TravelExplorerTheme {
                 val navController = rememberNavController()
-                var favoriteIds by remember { mutableStateOf(setOf<Int>()) }
+
+                // State Management: Map stores destination IDs and ratings - Karanthi
+                var ratings by remember {
+                    mutableStateOf(
+                        sampleDestinations.associate {
+                            it.id to 0
+                        }
+                    )
+                }
+                val favoriteDestinations = sampleDestinations.filter {
+                    (ratings[it.id] ?: 0) >= 4
+                }
 
                 NavHost(
                     navController = navController,
@@ -40,37 +49,26 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("home") {
                         HomeScreen(
-                            destinationList = destinations,
-                            favList = favoriteIds,
-                            favoriteClicked = { selectedID ->
-                                Log.d("selected ID", selectedID.toString())
-                                favoriteIds = if (selectedID in favoriteIds) {
-                                    favoriteIds - selectedID
-                                } else {
-                                    favoriteIds + selectedID
-                                }
-                                Log.d("listOfIDS", favoriteIds.toString())
+                            destinationList = sampleDestinations,
+                            ratings = ratings,
+
+                            // State Hoisting: callback updates parent state - Karanthi
+                            onRatingChange = { destinationId, newRating ->
+                                ratings = ratings + (destinationId to newRating)
                             },
-                            movetoFavClicked = {
-                                navController.navigate("selectedDestinations")
+                            moveToFavClicked = {
+                                navController.navigate("favorites")
                             }
                         )
                     }
 
-                    composable("selectedDestinations") {
+                    composable("favorites") {
                         SelectedDestinations(
-                           // favoriteDestinations = destinations.filter { it.id in favoriteIds },destinations = destinations,
-                            //                            favoriteIds = favoriteIds,
-                            destinations = destinations,
-                            favoriteIds = favoriteIds,
-                            favoriteClicked = { selectedID ->
-                                favoriteIds = if (selectedID in favoriteIds) {
-                                    favoriteIds - selectedID
-                                } else {
-                                    favoriteIds + selectedID
-                                }
-                            },
-                            onBack = { navController.popBackStack() }
+                            destinationList = favoriteDestinations,
+                            ratings = ratings,
+                            backButtonClicked = {
+                                navController.popBackStack()
+                            }
                         )
                     }
                 }
